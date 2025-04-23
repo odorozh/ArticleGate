@@ -22,10 +22,12 @@ mdurl==0.1.2
 platformdirs==4.3.7
 pydantic==2.11.3
 pydantic_core==2.33.1
+pydentic==0.0.1.dev3
 Pygments==2.19.1
 pylint==3.3.6
 python-dotenv==1.1.0
 python-multipart==0.0.20
+python-stdnum==1.20
 PyYAML==6.0.2
 rich==14.0.0
 rich-toolkit==0.14.1
