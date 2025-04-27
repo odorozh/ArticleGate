@@ -4,5 +4,7 @@ from fastapi import FastAPI
 app = FastAPI()
 
 @app.get("/")
-def root():
-    return "FIRST TITLE"
+async def root():
+    welcome_msg = "Welcome to ArticleGate Web-app! " + \
+                  "Store and retrieve information about scientific articles."
+    return {"ServiceInfo" : welcome_msg}
