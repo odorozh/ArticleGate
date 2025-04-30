@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS author (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    affiliation_org_id INTEGER,
+    affiliation_org_id INTEGER NOT NULL,
     FOREIGN KEY (affiliation_org_id) REFERENCES organisation (id)
 );
 
