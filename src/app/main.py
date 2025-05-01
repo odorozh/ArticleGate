@@ -8,7 +8,7 @@ from typing import Annotated
 from authx import AuthX, AuthXConfig
 from fastapi import FastAPI, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+import sqlalchemy as sqla
 from sqlalchemy.ext.asyncio import(
     create_async_engine,
     async_sessionmaker,
@@ -19,9 +19,9 @@ from .models.article import ArticleModel
 from .models.author import AuthorModel
 from .models.organisation import OrganisationModel
 from .schemas import (
-    AuthorGetSchema,
-    ArticleGetSchema,
-    OrganisationGetSchema,
+    AuthorIdSchema,
+    ArticleDOISchema,
+    OrganisationIdSchema,
 )
 from . import app_admin
 
@@ -34,7 +34,9 @@ access_cookie_name = app_admin.ACCESS_COOKIE
 security_config = AuthXConfig()
 security_config.JWT_SECRET_KEY = app_admin.APP_ADMIN_SECRET
 security_config.JWT_ACCESS_COOKIE_NAME = access_cookie_name
+security_config.JWT_ACCESS_CSRF_COOKIE_NAME = access_cookie_name
 security_config.JWT_TOKEN_LOCATION = ["cookies"]
+security_config.JWT_CSRF_METHODS = []
 security = AuthX(config=security_config)
 
 
@@ -69,34 +71,34 @@ async def root():
 
 
 @app.get("/author", tags=["retrieve data"])
-async def get_author(data: Annotated[AuthorGetSchema, Depends()], session: SessionDep):
+async def get_author(data: Annotated[AuthorIdSchema, Depends()], session: SessionDep):
     """
         Handler for author information requests.
     """
 
-    query = select(AuthorModel).where(AuthorModel.id == data.id)
+    query = sqla.select(AuthorModel).where(AuthorModel.id == data.id)
     results = await session.execute(query)
     return results.scalar()
 
 
 @app.get("/article", tags=["retrieve data"])
-async def get_article(data: Annotated[ArticleGetSchema, Depends()], session: SessionDep):
+async def get_article(data: Annotated[ArticleDOISchema, Depends()], session: SessionDep):
     """
         Handler for article information requests.
     """
 
-    query = select(ArticleModel).where(ArticleModel.doi == data.doi)
+    query = sqla.select(ArticleModel).where(ArticleModel.doi == data.doi)
     results = await session.execute(query)
     return results.scalar()
 
 
 @app.get("/org", tags=["retrieve data"])
-async def get_org(data: Annotated[OrganisationGetSchema, Depends()], session: SessionDep):
+async def get_org(data: Annotated[OrganisationIdSchema, Depends()], session: SessionDep):
     """
         Handler for organisation information requests.
     """
 
-    query = select(OrganisationModel).where(OrganisationModel.id == data.id)
+    query = sqla.select(OrganisationModel).where(OrganisationModel.id == data.id)
     results = await session.execute(query)
     return results.scalar()
 
@@ -116,3 +118,18 @@ async def admin_auth(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     token = security.create_access_token(uid="admin")
     resp.set_cookie(access_cookie_name, token)
     return {access_cookie_name: token}
+
+
+@app.delete("/delete/org", dependencies=[Depends(security.access_token_required)], tags=["delete"])
+async def delete_org(data: Annotated[OrganisationIdSchema, Depends()], session: SessionDep):
+    check_query = sqla.select(AuthorModel).where(AuthorModel.affiliation_org_id == data.id)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) != 0:
+        raise HTTPException(status_code=406, detail="Cant delete organisation with ID {}, because it is used in existing author rows".format(data.id))
+
+    query = sqla.delete(OrganisationModel).where(OrganisationModel.id == data.id)
+    results = await session.execute(query)
+
+    if results.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Required organisation ID {} was not found".format(data.id))
+    return "Organisation with ID {} was deleted".format(data.id)

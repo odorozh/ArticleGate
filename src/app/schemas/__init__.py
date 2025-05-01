@@ -16,13 +16,13 @@ class IdGetSchema(PDBaseModel):
         return value
 
 
-class AuthorGetSchema(IdGetSchema):
+class AuthorIdSchema(IdGetSchema):
     pass
 
 
-class ArticleGetSchema(PDBaseModel):
+class ArticleDOISchema(PDBaseModel):
     doi: str
 
 
-class OrganisationGetSchema(IdGetSchema):
+class OrganisationIdSchema(IdGetSchema):
     pass
