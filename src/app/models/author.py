@@ -5,6 +5,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from .base import BaseModel
 
+
 class AuthorModel(BaseModel):
     """
         Model of author objects.

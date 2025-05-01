@@ -2,8 +2,9 @@
     ORM logic for 'article_to_author' table.
 """
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String
 from .base import BaseModel
+
 
 class ArticleToAuthorModel(BaseModel):
     """
@@ -13,6 +14,6 @@ class ArticleToAuthorModel(BaseModel):
 
     __tablename__ = "article_to_author"
 
-    doi: Column(String, primary_key=True)
-    author_id: Column(Integer, nullable=False)
-    place: int = Column(Integer, nullable=False)
+    doi = Column(String, primary_key=True)
+    author_id = Column(Integer, nullable=False)
+    place = Column(Integer, nullable=False)
