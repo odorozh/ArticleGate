@@ -25,4 +25,4 @@ class ArticleGetSchema(PDBaseModel):
 
 
 class OrganisationGetSchema(IdGetSchema):
-        pass
+    pass
