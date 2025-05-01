@@ -2,7 +2,8 @@
     ORM logic for 'article_to_author' table.
 """
 
-from pydantic import BaseModel, Field
+from sqlalchemy import Column, Integer, String, ForeignKey
+from .base import BaseModel
 
 class ArticleToAuthorModel(BaseModel):
     """
@@ -10,6 +11,8 @@ class ArticleToAuthorModel(BaseModel):
         and one of its authors.
     """
 
-    doi: str
-    author_id: int
-    place: int = Field(gt=0)
+    __tablename__ = "article_to_author"
+
+    doi: Column(String, primary_key=True)
+    author_id: Column(Integer, nullable=False)
+    place: int = Column(Integer, nullable=False)

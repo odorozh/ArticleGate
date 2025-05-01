@@ -2,13 +2,16 @@
     ORM logic for 'article' table.
 """
 
-from pydantic import BaseModel
+from sqlalchemy import Column, String
+from .base import BaseModel
 
 class ArticleModel(BaseModel):
     """
         Model of article objects.
     """
 
-    doi: str
-    title: str
-    posting_date: str
+    __tablename__ = "article"
+
+    doi = Column(String, primary_key=True)
+    title = Column(String, nullable=False)
+    posting_date = Column(String, nullable=False)
