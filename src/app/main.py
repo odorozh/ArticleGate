@@ -18,6 +18,7 @@ from .models.base import BaseModel
 from .models.article import ArticleModel
 from .models.author import AuthorModel
 from .models.organisation import OrganisationModel
+from .models.article_to_author import ArticleToAuthorModel
 from .schemas import (
     AuthorIdSchema,
     ArticleDOISchema,
@@ -92,6 +93,17 @@ async def get_article(data: Annotated[ArticleDOISchema, Depends()], session: Ses
     return results.scalar()
 
 
+@app.get("/articles_by_author", tags=["retrieve data"])
+async def get_article_by_author(data: Annotated[AuthorIdSchema, Depends()], session: SessionDep):
+    """
+        Handler for articles list by author ID.
+    """
+
+    query = sqla.select(ArticleToAuthorModel).where(ArticleToAuthorModel.author_id == data.id)
+    results = await session.execute(query)
+    return results.scalars().all()
+
+
 @app.get("/org", tags=["retrieve data"])
 async def get_org(data: Annotated[OrganisationIdSchema, Depends()], session: SessionDep):
     """
@@ -122,6 +134,11 @@ async def admin_auth(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 
 @app.delete("/delete/org", dependencies=[Depends(security.access_token_required)], tags=["delete"])
 async def delete_org(data: Annotated[OrganisationIdSchema, Depends()], session: SessionDep):
+    """
+        Delete organisation handler.
+        Failes if any auther is affilated with requested organisation.
+    """
+
     check_query = sqla.select(AuthorModel).where(AuthorModel.affiliation_org_id == data.id)
     check_results = await session.execute(check_query)
     if len(check_results.scalars().all()) != 0:
@@ -133,3 +150,4 @@ async def delete_org(data: Annotated[OrganisationIdSchema, Depends()], session: 
     if results.rowcount == 0:
         raise HTTPException(status_code=404, detail="Required organisation ID {} was not found".format(data.id))
     return "Organisation with ID {} was deleted".format(data.id)
+
