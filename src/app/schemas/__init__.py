@@ -26,3 +26,15 @@ class ArticleDOISchema(PDBaseModel):
 
 class OrganisationIdSchema(IdGetSchema):
     pass
+
+
+class ArticleAuthorBindingSchema(PDBaseModel):
+    doi: str
+    place: int
+
+    @field_validator('place', mode='after')
+    @classmethod
+    def validate_place(cls, place: int) -> int:
+        if place < 1:
+            raise ValueError(f'{place} is less than 1')
+        return place

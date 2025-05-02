@@ -23,6 +23,7 @@ from .schemas import (
     AuthorIdSchema,
     ArticleDOISchema,
     OrganisationIdSchema,
+    ArticleAuthorBindingSchema,
 )
 from . import app_admin
 
@@ -172,3 +173,16 @@ async def delete_org(data: Annotated[OrganisationIdSchema, Depends()], session: 
         raise HTTPException(status_code=404, detail="Required organisation ID {} was not found".format(data.id))
     return "Organisation with ID {} was deleted".format(data.id)
 
+
+@app.delete("/delete/binding", dependencies=[Depends(security.access_token_required)], tags=["delete"])
+async def delete_binding(data: Annotated[ArticleAuthorBindingSchema, Depends()], session: SessionDep):
+    """
+        Delete binding article-author row by article DOI and author place.
+    """
+
+    query = sqla.delete(ArticleToAuthorModel).where((ArticleToAuthorModel.doi == data.doi) & (ArticleToAuthorModel.place == data.place))
+    results = await session.execute(query)
+
+    if results.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Author-binding of article {} and place {} was not found".format(data.doi, data.place))
+    return "Author-binding of article {} and place {} was deleted".format(data.doi, data.place)
