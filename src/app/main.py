@@ -186,3 +186,41 @@ async def delete_binding(data: Annotated[ArticleAuthorBindingSchema, Depends()],
     if results.rowcount == 0:
         raise HTTPException(status_code=404, detail="Author-binding of article {} and place {} was not found".format(data.doi, data.place))
     return "Author-binding of article {} and place {} was deleted".format(data.doi, data.place)
+
+
+@app.delete("/delete/author", dependencies=[Depends(security.access_token_required)], tags=["delete"])
+async def delete_author(data: Annotated[AuthorIdSchema, Depends()], session: SessionDep):
+    """
+        Delete author handler.
+    """
+
+    check_query = sqla.select(ArticleToAuthorModel).where(ArticleToAuthorModel.author_id == data.id)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) != 0:
+        raise HTTPException(status_code=406, detail="Cant delete author with ID {}, because it is used in existing article to author binding".format(data.id))
+    
+    query = sqla.delete(AuthorModel).where(AuthorModel.id == data.id)
+    results = await session.execute(query)
+
+    if results.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Required author with ID {} was not found".format(data.id))
+    return "Required author with ID {} was deleted".format(data.id)
+
+
+@app.delete("/delete/article", dependencies=[Depends(security.access_token_required)], tags=["delete"])
+async def delete_article(data: Annotated[ArticleDOISchema, Depends()], session: SessionDep):
+    """
+        Delete article handler.
+    """
+
+    check_query = sqla.select(ArticleToAuthorModel).where(ArticleToAuthorModel.doi == data.doi)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) != 0:
+        raise HTTPException(status_code=406, detail="Cant delete article DOI {}, because it is used in existing article to author binding".format(data.doi))
+    
+    query = sqla.delete(ArticleModel).where(ArticleModel.doi == data.doi)
+    results = await session.execute(query)
+
+    if results.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Required article DOI {} was not found".format(data.doi))
+    return "Required article DOI {} was deleted".format(data.doi)
