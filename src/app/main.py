@@ -104,6 +104,27 @@ async def get_article_by_author(data: Annotated[AuthorIdSchema, Depends()], sess
     return results.scalars().all()
 
 
+@app.get("/authors_of_article", tags=["retrieve data"])
+async def get_authors_of_article(data: Annotated[ArticleDOISchema, Depends()], session: SessionDep):
+    """
+        Handler for authors list by article DOI.
+    """
+
+    general_query = sqla.select(ArticleToAuthorModel).where(ArticleToAuthorModel.doi == data.doi).order_by(ArticleToAuthorModel.place.asc())
+    results = await session.execute(general_query)
+    results = results.scalars().all()
+
+    for idx in range(len(results)):
+        author_id = results[idx].author_id
+        author_query = sqla.select(AuthorModel).where(AuthorModel.id == author_id)
+        author_result = await session.execute(author_query)
+
+        results[idx] = results[idx].__dict__
+        results[idx]["author_info"] = author_result.scalar_one_or_none()
+
+    return results
+
+
 @app.get("/org", tags=["retrieve data"])
 async def get_org(data: Annotated[OrganisationIdSchema, Depends()], session: SessionDep):
     """
