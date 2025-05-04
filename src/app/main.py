@@ -289,7 +289,7 @@ async def create_org(data: Annotated[OrganisationFullSchema, Depends()], session
         msg = f"Cant create organisation with existing ID {data.id}"
         raise HTTPException(status_code=406, detail=msg)
 
-    new_org = OrganisationModel(id=data.doi, title=data.title, location=data.location)
+    new_org = OrganisationModel(id=data.id, title=data.title, location=data.location)
     session.add(new_org)
     await session.commit()
     return f"Organisation with ID {data.id} was added"
@@ -353,6 +353,7 @@ async def alter_article(data: Annotated[ArticleFullSchema, Depends()], session: 
     if article is not None:
         article.title = data.title
         article.posting_date = data.posting_date
+        await session.commit()
         return f"Article DOI {data.doi} was altered"
 
     raise HTTPException(status_code=404, detail=f"Article DOI {data.doi} was not found")
@@ -368,6 +369,7 @@ async def alter_author(data: Annotated[AuthorFullSchema, Depends()], session: Se
     if author is not None:
         author.name = data.name
         author.affiliation_org_id = data.affiliation_org_id
+        await session.commit()
         return f"Author ID {data.id} was altered"
 
     raise HTTPException(status_code=404, detail=f"Author ID {data.id} was not found")
@@ -383,6 +385,7 @@ async def alter_org(data: Annotated[OrganisationFullSchema, Depends()], session:
     if org is not None:
         org.title = data.title
         org.location = data.location
+        await session.commit()
         return f"Organisation ID {data.id} was altered"
 
     raise HTTPException(status_code=404, detail=f"Organisation ID {data.id} was not found")
@@ -399,6 +402,7 @@ async def alter_article_to_author(
     binding = await session.get(ArticleToAuthorModel, (data.doi, data.author_id))
     if binding is not None:
         binding.place = data.place
+        await session.commit()
         return f"Binding DOI {data.doi} -> author ID {data.author_id} was altered"
 
     msg = f"Binding DOI {data.doi} -> author ID {data.author_id} was not found"
