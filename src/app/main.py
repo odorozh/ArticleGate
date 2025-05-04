@@ -243,3 +243,20 @@ async def create_article(data: Annotated[ArticleFullSchema, Depends()], session:
     session.add(new_article)
     await session.commit()
     return "Article DOI {} was added".format(data.doi)
+
+
+@app.post("/create/org", dependencies=[Depends(security.access_token_required)], tags=["create"])
+async def create_author(data: Annotated[OrganisationFullSchema, Depends()], session: SessionDep):
+    """
+        Create new organisation handler.
+    """
+    
+    check_query = sqla.select(OrganisationModel).where(OrganisationModel.id == data.id)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) != 0:
+        raise HTTPException(status_code=406, detail="Cant create organisation with existing ID {}".format(data.id))
+    
+    new_org = OrganisationModel(id=data.doi, title=data.title, location=data.location)
+    session.add(new_org)
+    await session.commit()
+    return "Organisation with ID {} was added".format(data.id)
