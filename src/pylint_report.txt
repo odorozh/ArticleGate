@@ -1,0 +1,16 @@
+************* Module app.main
+app/main.py:196:0: C0301: Line too long (102/100) (line-too-long)
+************* Module app.models.article
+app/models/article.py:8:0: R0903: Too few public methods (0/2) (too-few-public-methods)
+************* Module app.models.organisation
+app/models/organisation.py:8:0: R0903: Too few public methods (0/2) (too-few-public-methods)
+************* Module app.models.base
+app/models/base.py:8:0: R0903: Too few public methods (0/2) (too-few-public-methods)
+************* Module app.models.author
+app/models/author.py:9:0: R0903: Too few public methods (0/2) (too-few-public-methods)
+************* Module app.models.article_to_author
+app/models/article_to_author.py:9:0: R0903: Too few public methods (0/2) (too-few-public-methods)
+
+------------------------------------------------------------------
+Your code has been rated at 9.78/10 (previous run: 9.78/10, +0.00)
+
