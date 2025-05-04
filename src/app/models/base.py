@@ -6,4 +6,6 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class BaseModel(DeclarativeBase):
-    pass
+    """
+        ORM base-class with all DB meta information
+    """
