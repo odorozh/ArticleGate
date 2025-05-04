@@ -96,3 +96,27 @@ class AuthorFullSChema(IdGetSchema):
 
     name: str
     affiliation_org_id: int
+
+
+class ArticleToAuthorFullSchema(PDBaseModel):
+    """
+        Article to author all binding fields.
+    """
+    
+    article_doi: str
+    author_id: int
+    place: int
+
+    @field_validator('author_id', mode='after')
+    @classmethod
+    def ge(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError(f'Author ID {value} is less than zero')
+        return value
+    
+    @field_validator('place', mode='after')
+    @classmethod
+    def ge(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError(f'Place {value} is less than zero')
+        return value

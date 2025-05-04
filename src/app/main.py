@@ -27,6 +27,7 @@ from .schemas import (
     ArticleFullSchema,
     OrganisationFullSchema,
     AuthorFullSChema,
+    ArticleToAuthorFullSchema,
 )
 from . import app_admin
 
@@ -275,6 +276,7 @@ async def create_author(data: Annotated[AuthorFullSChema, Depends()], session: S
         raise HTTPException(status_code=406, detail="Cant add author with existing ID {}".format(data.id))
     
     check_query2 = sqla.select(OrganisationModel).where(OrganisationModel.id == data.affiliation_org_id)
+    check_results = await session.execute(check_query2)
     if len(check_results.scalars().all()) == 0:
         raise HTTPException(status_code=406, detail="Cant add author with not existing affiliation ID {}".format(data.affiliation_org_id))
     
@@ -282,3 +284,25 @@ async def create_author(data: Annotated[AuthorFullSChema, Depends()], session: S
     session.add(new_author)
     await session.commit()
     return "Author with ID {} was added".format(data.id)
+
+
+@app.post("/create/article_to_author", dependencies=[Depends(security.access_token_required)], tags=["create"])
+async def create_author(data: Annotated[ArticleToAuthorFullSchema, Depends()], session: SessionDep):
+    """
+        Create new article to author binding handler.
+    """
+
+    check_query = sqla.select(AuthorModel).where(AuthorModel.id == data.author_id)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) == 0:
+        raise HTTPException(status_code=406, detail="Cant find author with ID {}".format(data.id))
+    
+    check_query2 = sqla.select(ArticleModel).where(ArticleModel.doi == data.doi)
+    check_results = await session.execute(check_query2)
+    if len(check_results.scalars().all()) == 0:
+        raise HTTPException(status_code=406, detail="Cant find article with DOI {}".format(data.doi))
+    
+    new_binding = AuthorModel(doi=data.doi, author_id=data.author_id, place=data.place)
+    session.add(new_binding)
+    await session.commit()
+    return "Binding DOI {} -> author ID {} was added".format(data.doi, data.author_id)
