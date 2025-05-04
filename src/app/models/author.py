@@ -16,4 +16,3 @@ class AuthorModel(BaseModel):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     affiliation_org_id = Column(String, ForeignKey("organisation.id"), nullable=False)
-
