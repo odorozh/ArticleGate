@@ -32,6 +32,8 @@ from .schemas import (
 from . import app_admin
 
 
+# General objects: application and DB engine/session maker,
+# that are required for the application processing.
 db_engine = create_async_engine("sqlite+aiosqlite:///app/article_gate.sqlite3")
 new_session = async_sessionmaker(db_engine, expire_on_commit=False)
 app = FastAPI()
