@@ -26,6 +26,7 @@ from .schemas import (
     ArticleAuthorBindingSchema,
     ArticleFullSchema,
     OrganisationFullSchema,
+    AuthorFullSChema,
 )
 from . import app_admin
 
@@ -260,3 +261,24 @@ async def create_author(data: Annotated[OrganisationFullSchema, Depends()], sess
     session.add(new_org)
     await session.commit()
     return "Organisation with ID {} was added".format(data.id)
+
+
+@app.post("/create/author", dependencies=[Depends(security.access_token_required)], tags=["create"])
+async def create_author(data: Annotated[AuthorFullSChema, Depends()], session: SessionDep):
+    """
+        Create new author handler.
+    """
+    
+    check_query = sqla.select(AuthorModel).where(AuthorModel.id == data.id)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) != 0:
+        raise HTTPException(status_code=406, detail="Cant add author with existing ID {}".format(data.id))
+    
+    check_query2 = sqla.select(OrganisationModel).where(OrganisationModel.id == data.affiliation_org_id)
+    if len(check_results.scalars().all()) == 0:
+        raise HTTPException(status_code=406, detail="Cant add author with not existing affiliation ID {}".format(data.affiliation_org_id))
+    
+    new_author = AuthorModel(id=data.id, name=data.name, affiliation_org_id=data.affiliation_org_id)
+    session.add(new_author)
+    await session.commit()
+    return "Author with ID {} was added".format(data.id)
