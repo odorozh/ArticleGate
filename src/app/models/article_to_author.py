@@ -15,5 +15,5 @@ class ArticleToAuthorModel(BaseModel):
     __tablename__ = "article_to_author"
 
     doi = Column(String, primary_key=True)
-    author_id = Column(Integer, nullable=False)
+    author_id = Column(Integer, primary_key=True)
     place = Column(Integer, nullable=False)

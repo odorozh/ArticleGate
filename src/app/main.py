@@ -26,7 +26,7 @@ from .schemas import (
     ArticleAuthorBindingSchema,
     ArticleFullSchema,
     OrganisationFullSchema,
-    AuthorFullSChema,
+    AuthorFullSchema,
     ArticleToAuthorFullSchema,
 )
 from . import app_admin
@@ -250,7 +250,7 @@ async def create_article(data: Annotated[ArticleFullSchema, Depends()], session:
 
 
 @app.post("/create/org", dependencies=[Depends(security.access_token_required)], tags=["create"])
-async def create_author(data: Annotated[OrganisationFullSchema, Depends()], session: SessionDep):
+async def create_org(data: Annotated[OrganisationFullSchema, Depends()], session: SessionDep):
     """
         Create new organisation handler.
     """
@@ -267,7 +267,7 @@ async def create_author(data: Annotated[OrganisationFullSchema, Depends()], sess
 
 
 @app.post("/create/author", dependencies=[Depends(security.access_token_required)], tags=["create"])
-async def create_author(data: Annotated[AuthorFullSChema, Depends()], session: SessionDep):
+async def create_author(data: Annotated[AuthorFullSchema, Depends()], session: SessionDep):
     """
         Create new author handler.
     """
@@ -289,7 +289,7 @@ async def create_author(data: Annotated[AuthorFullSChema, Depends()], session: S
 
 
 @app.post("/create/article_to_author", dependencies=[Depends(security.access_token_required)], tags=["create"])
-async def create_author(data: Annotated[ArticleToAuthorFullSchema, Depends()], session: SessionDep):
+async def create_article_to_author(data: Annotated[ArticleToAuthorFullSchema, Depends()], session: SessionDep):
     """
         Create new article to author binding handler.
     """
@@ -297,7 +297,7 @@ async def create_author(data: Annotated[ArticleToAuthorFullSchema, Depends()], s
     check_query = sqla.select(AuthorModel).where(AuthorModel.id == data.author_id)
     check_results = await session.execute(check_query)
     if len(check_results.scalars().all()) == 0:
-        raise HTTPException(status_code=406, detail="Cant find author with ID {}".format(data.id))
+        raise HTTPException(status_code=406, detail="Cant find author with ID {}".format(data.author_id))
     
     check_query2 = sqla.select(ArticleModel).where(ArticleModel.doi == data.doi)
     check_results = await session.execute(check_query2)
@@ -308,3 +308,62 @@ async def create_author(data: Annotated[ArticleToAuthorFullSchema, Depends()], s
     session.add(new_binding)
     await session.commit()
     return "Binding DOI {} -> author ID {} was added".format(data.doi, data.author_id)
+
+
+@app.post("/alter/article", dependencies=[Depends(security.access_token_required)], tags=["alter"])
+async def alter_article(data: Annotated[ArticleFullSchema, Depends()], session: SessionDep):
+    """
+        Alter article handler.
+    """
+
+    article = await session.get(ArticleModel, data.doi)
+    if article is not None:
+        article.title = data.title
+        article.posting_date = data.posting_date
+        return "Article DOI {} was altered".format(data.doi)
+    
+    raise HTTPException(status_code=404, detail="Article DOI {} was not found".format(data.doi))
+
+
+@app.post("/alter/author", dependencies=[Depends(security.access_token_required)], tags=["alter"])
+async def alter_author(data: Annotated[AuthorFullSchema, Depends()], session: SessionDep):
+    """
+        Alter author handler.
+    """
+
+    author = await session.get(AuthorModel, data.id)
+    if author is not None:
+        author.name = data.name
+        author.affiliation_org_id = data.affiliation_org_id
+        return "Author ID {} was altered".format(data.id)
+    
+    raise HTTPException(status_code=404, detail="Author ID {} was not found".format(data.id))
+
+
+@app.post("/alter/org", dependencies=[Depends(security.access_token_required)], tags=["alter"])
+async def alter_org(data: Annotated[OrganisationFullSchema, Depends()], session: SessionDep):
+    """
+        Alter organisation handler.
+    """
+
+    org = await session.get(OrganisationModel, data.id)
+    if org is not None:
+        org.title = data.title
+        org.location = data.location
+        return "Organisation ID {} was altered".format(data.id)
+    
+    raise HTTPException(status_code=404, detail="Organisation ID {} was not found".format(data.id))
+
+
+@app.post("/alter/article_to_author", dependencies=[Depends(security.access_token_required)], tags=["alter"])
+async def alter_article_to_author(data: Annotated[ArticleToAuthorFullSchema, Depends()], session: SessionDep):
+    """
+        Alter article to author binding handler.
+    """
+
+    binding = await session.get(ArticleToAuthorModel, (data.doi, data.author_id))
+    if binding is not None:
+        binding.place = data.place
+        return "Binding DOI {} -> author ID {} was altered".format(data.doi, data.author_id)
+
+    raise HTTPException(status_code=404, detail="Binding DOI {} -> author ID {} was not found".format(data.doi, data.author_id))

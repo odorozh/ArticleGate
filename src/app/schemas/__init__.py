@@ -89,7 +89,7 @@ class OrganisationFullSchema(IdGetSchema):
     location: str
 
 
-class AuthorFullSChema(IdGetSchema):
+class AuthorFullSchema(IdGetSchema):
     """
         Author schema: all fields.
     """
@@ -103,7 +103,7 @@ class ArticleToAuthorFullSchema(PDBaseModel):
         Article to author all binding fields.
     """
     
-    article_doi: str
+    doi: str
     author_id: int
     place: int
 
