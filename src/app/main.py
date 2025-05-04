@@ -24,6 +24,8 @@ from .schemas import (
     ArticleDOISchema,
     OrganisationIdSchema,
     ArticleAuthorBindingSchema,
+    ArticleFullSchema,
+    OrganisationFullSchema,
 )
 from . import app_admin
 
@@ -224,3 +226,20 @@ async def delete_article(data: Annotated[ArticleDOISchema, Depends()], session: 
     if results.rowcount == 0:
         raise HTTPException(status_code=404, detail="Required article DOI {} was not found".format(data.doi))
     return "Required article DOI {} was deleted".format(data.doi)
+
+
+@app.post("/create/article", dependencies=[Depends(security.access_token_required)], tags=["create"])
+async def create_article(data: Annotated[ArticleFullSchema, Depends()], session: SessionDep):
+    """
+        Create new article handler.
+    """
+    
+    check_query = sqla.select(ArticleModel).where(ArticleModel.doi == data.doi)
+    check_results = await session.execute(check_query)
+    if len(check_results.scalars().all()) != 0:
+        raise HTTPException(status_code=406, detail="Cant create article with existing DOI {}".format(data.doi))
+    
+    new_article = ArticleModel(doi=data.doi, title=data.title, posting_date=data.posting_date)
+    session.add(new_article)
+    await session.commit()
+    return "Article DOI {} was added".format(data.doi)
