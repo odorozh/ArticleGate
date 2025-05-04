@@ -4,6 +4,7 @@
 """
 
 from typing import Annotated
+from contextlib import asynccontextmanager
 
 from authx import AuthX, AuthXConfig
 from fastapi import FastAPI, Depends, HTTPException, Response
@@ -38,6 +39,7 @@ db_engine = create_async_engine("sqlite+aiosqlite:///app/article_gate.sqlite3")
 new_session = async_sessionmaker(db_engine, expire_on_commit=False)
 app = FastAPI()
 
+# Security config for authentification and access cookie
 ACCESS_COOKIE_NAME = app_admin.ACCESS_COOKIE
 security_config = AuthXConfig()
 security_config.JWT_SECRET_KEY = app_admin.APP_ADMIN_SECRET
@@ -48,13 +50,17 @@ security_config.JWT_CSRF_METHODS = []
 security = AuthX(config=security_config)
 
 
-@app.on_event("startup")
-async def setup_models():
+# @app.on_event("startup")
+# async def setup_models():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
         Prepare DB on application start up
     """
     async with db_engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
+    yield
+    return
 
 
 async def make_new_session():
