@@ -50,8 +50,6 @@ security_config.JWT_CSRF_METHODS = []
 security = AuthX(config=security_config)
 
 
-# @app.on_event("startup")
-# async def setup_models():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
