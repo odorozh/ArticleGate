@@ -92,7 +92,7 @@ def test_get_authors_of_article():
     assert len(resp1.json()) == 6
 
 
-def test_auth():
+def test_auth_fail():
     """
         Auth admin test
     """
@@ -107,10 +107,25 @@ def test_auth():
     assert resp.status_code == 401
 
 
+def test_auth_ok():
+    auth = {
+        "grant_type": "password",
+        "username": "veritas",
+        "password": "vino",
+        "client_id": "string",
+        "client_secret": "string"
+    }
+    auth_resp = client.post("/auth", data=auth)
+    assert auth_resp.status_code == 200
+    assert auth_resp.json()["access-token"] != ""
+    assert "access-token" in dict(auth_resp.cookies.items())
+
+
 def test_create_article():
     """
         Test POST /create/author
     """
+    client.cookies = {}
     data = {
         "id": "-8",
         "name": "testAuthor",
@@ -124,6 +139,7 @@ def test_create_article():
     """
         Test POST /create/article
     """
+    client.cookies = {}
     data = {
         "doi": "test_doi",
         "title": "testTitle",
@@ -137,6 +153,7 @@ def test_create_article_to_author():
     """
         Test POST /create/article_to_author
     """
+    client.cookies = {}
     data = {
         "doi": "128",
         "author_id": "1",
@@ -150,6 +167,7 @@ def test_create_org():
     """
         Test POST /create/org
     """
+    client.cookies = {}
     data = {
         "id": "128",
         "title": "testTitle",
@@ -157,3 +175,138 @@ def test_create_org():
     }
     resp = client.post("/create/org", data=data)
     assert resp.status_code == 500
+
+
+def test_create_delete_article():
+    """
+        Test create/delete handlers for article
+    """
+    client.cookies = {}
+    auth = {
+        "grant_type": "password",
+        "username": "veritas",
+        "password": "vino",
+        "client_id": "string",
+        "client_secret": "string"
+    }
+    auth_resp = client.post("/auth", data=auth)
+    assert auth_resp.status_code == 200
+    assert auth_resp.json()["access-token"] != ""
+    
+    cookies = dict(auth_resp.cookies.items())
+    assert "access-token" in cookies
+
+    resp = client.post("/create/article?doi=99999&title=test&posting_date=2025-05-05")
+    assert resp.status_code == 200
+
+    resp = client.delete("/delete/article?doi=99999")
+    assert resp.status_code == 200
+
+
+def test_create_delete_org():
+    """
+        Test create/delete handlers for organisation
+    """
+    client.cookies = {}
+    auth = {
+        "grant_type": "password",
+        "username": "veritas",
+        "password": "vino",
+        "client_id": "string",
+        "client_secret": "string"
+    }
+    auth_resp = client.post("/auth", data=auth)
+    assert auth_resp.status_code == 200
+    assert auth_resp.json()["access-token"] != ""
+    
+    cookies = dict(auth_resp.cookies.items())
+    assert "access-token" in cookies
+
+    resp = client.post("/create/org?id=99999&title=test&location=testLoc")
+    assert resp.status_code == 200
+
+    resp = client.delete("/delete/org?id=99999")
+    assert resp.status_code == 200
+
+
+def test_create_delete_author():
+    """
+        Test create/delete handlers for author
+    """
+    client.cookies = {}
+    auth = {
+        "grant_type": "password",
+        "username": "veritas",
+        "password": "vino",
+        "client_id": "string",
+        "client_secret": "string"
+    }
+    auth_resp = client.post("/auth", data=auth)
+    assert auth_resp.status_code == 200
+    assert auth_resp.json()["access-token"] != ""
+    
+    cookies = dict(auth_resp.cookies.items())
+    assert "access-token" in cookies
+
+    resp = client.get("/author?id=999991")
+    assert resp.status_code == 200
+    assert resp.json() is None
+
+    resp = client.post("/create/author?id=999991&name=test&affiliation_org_id=0")
+    assert resp.status_code == 200
+
+    resp = client.get("/author?id=999991")
+    assert resp.status_code == 200
+    assert resp.json() is not None
+
+    resp = client.delete("/delete/author?id=999991")
+    assert resp.status_code == 200
+
+
+def test_create_change_delete_author():
+    """
+        Test create/change/delete handlers for author
+    """
+    client.cookies = {}
+    auth = {
+        "grant_type": "password",
+        "username": "veritas",
+        "password": "vino",
+        "client_id": "string",
+        "client_secret": "string"
+    }
+    auth_resp = client.post("/auth", data=auth)
+    assert auth_resp.status_code == 200
+    assert auth_resp.json()["access-token"] != ""
+    
+    cookies = dict(auth_resp.cookies.items())
+    assert "access-token" in cookies
+
+    resp = client.get("/author?id=999993")
+    assert resp.status_code == 200
+    assert resp.json() is None
+
+    resp = client.post("/create/author?id=999993&name=test&affiliation_org_id=0")
+    assert resp.status_code == 200
+
+    resp = client.get("/author?id=999993")
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "id": 999993,
+        "name": "test",
+        "affiliation_org_id": 0
+    }
+
+    resp = client.post("/alter/author?id=999993&name=test&affiliation_org_id=1")
+    assert resp.status_code == 200
+
+    resp = client.get("/author?id=999993")
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "id": 999993,
+        "name": "test",
+        "affiliation_org_id": 1
+    }
+
+    resp = client.delete("/delete/author?id=999993")
+    assert resp.status_code == 200
